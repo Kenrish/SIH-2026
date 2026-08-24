@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expense Tracker</title>
+  <style>
+    :root {
+      --bg-color: #95dedf;
+      --primary-btn: #ffffff;
+      --text-dark: #1a1a1a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-dark);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header / Navbar */
+    header {
+      background-color: rgba(255, 255, 255, 0.2);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .navbar-links {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .navbar-links a {
+      text-decoration: none;
+      color: var(--text-dark);
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+
+    .navbar-links a:hover {
+      text-decoration: underline;
+    }
+
+    /* Form Container */
+    .container {
+      max-width: 600px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      width: 100%;
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group label {
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-bottom: 0.4rem;
+      text-transform: uppercase;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="number"],
+    .form-group input[type="date"] {
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: #ffffff;
+    }
+
+    /* Checkbox Group */
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .checkbox-group label {
+      font-size: 1rem;
+      font-weight: normal;
+      text-transform: none;
+      margin-bottom: 0;
+    }
+
+    /* Submit Button */
+    .btn-container {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 1.5rem;
+    }
+
+    .btn-submit {
+      background-color: var(--primary-btn);
+      color: black;
+      font-weight: bold;
+      padding: 0.75rem 2rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .btn-submit:hover {
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header>
+    <div class="title">Expense Tracker</div>
+    <nav class="navbar-links">
+      <a href="#home">HOME</a>
+      <a href="#contact">CONTACT US</a>
+    </nav>
+  </header>
+
+  <!-- Content Panel / Form -->
+  <main class="container">
+    <form id="expense-form">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" placeholder="Enter Your Name" required>
+      </div>
+
+      <div class="form-group">
+        <label for="mobile">Mobile Number</label>
+        <input type="text" id="mobile" name="mobile" placeholder="Enter Your Mobile Number">
+      </div>
+
+      <div class="form-group">
+        <label for="members">Number of Members</label>
+        <input type="number" id="members" name="members" min="1" placeholder="Enter Number of Members">
+      </div>
+
+      <div class="form-group">
+        <label for="destination">Destination</label>
+        <input type="text" id="destination" name="destination" placeholder="Enter Your Destination">
+      </div>
+
+      <div class="form-group">
+        <label for="budget">Budget of Trip</label>
+        <input type="number" id="budget" name="budget" step="0.01" min="0" placeholder="Enter Your Budget">
+      </div>
+
+      <div class="form-group">
+        <label for="date_from">From</label>
+        <input type="date" id="date_from" name="date_from">
+      </div>
+
+      <div class="form-group">
+        <label for="date_to">To</label>
+        <input type="date" id="date_to" name="date_to">
+      </div>
+
+      <div class="form-group">
+        <label>Do you also want Travel Itinerary?</label>
+        <div class="checkbox-group">
+          <input type="checkbox" id="itinerary" name="itinerary" value="yes">
+          <label for="itinerary">Yes</label>
+        </div>
+      </div>
+
+      <div class="btn-container">
+        <button type="submit" class="btn-submit">Submit</button>
+      </div>
+    </form>
+  </main>
+
+  <script>
+    const form = document.getElementById('expense-form');
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const budgetInput = document.getElementById('budget').value;
+      const numericBudget = parseFloat(budgetInput) || 0;
+
+      localStorage.setItem('travel_budget', numericBudget);
+      window.location.href = './index2.html';
+    });
+  </script>
+</body>
+</html>
