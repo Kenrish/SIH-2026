@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Travel Expense Tracker</title>
+  <title>Travel Expense Tracker & Smart Itinerary</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- FontAwesome for Icons -->
+  <script src="https://unpkg.com/lucide@latest" defer></script>
+  <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script>
     tailwind.config = {
@@ -16,13 +16,13 @@
         extend: {
           colors: {
             brand: {
-              50: '#ecfeff',
-              100: '#cffaff',
-              200: '#a5f3fc',
-              500: '#06b6d4',
-              600: '#0891b2',
-              700: '#0e7490',
-              900: '#164e63',
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              900: '#1e3a8a',
             }
           }
         }
@@ -30,615 +30,729 @@
     }
   </script>
 </head>
-<body class="bg-white text-slate-800 min-h-screen font-sans">
+<body class="bg-slate-50 text-slate-800 min-h-screen">
 
-  <!-- Budget Warning Pop-up Modal -->
-  <div id="budgetModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-cyan-100 text-center transform transition-all">
-      <div class="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-200">
-        <i data-lucide="alert-triangle" class="w-7 h-7 text-amber-600"></i>
+  <!-- Header -->
+  <header class="bg-brand-600 text-white shadow-md">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+      <!-- Top Panel Header Branding -->
+      <div class="flex items-center space-x-3">
+        <div>
+          <h1 class="text-2xl font-black tracking-tight leading-none">BcKET</h1>
+          <p class="text-xs text-brand-100 font-medium tracking-wide mt-0.5">Travel Expense & Budget Tracker</p>
+        </div>
+        <div class="h-6 w-px bg-brand-500 mx-2 hidden sm:block"></div>
+        <p class="text-xs text-brand-100 font-medium hidden sm:block">
+          Welcome, <span id="userDisplayName" class="font-bold underline capitalize">User</span>!
+        </p>
       </div>
-      <h3 class="text-xl font-bold text-slate-900 mb-2">Budget Threshold Warning</h3>
-      <p id="modalMessage" class="text-sm text-slate-600 mb-6 leading-relaxed"></p>
-      <button onclick="closeModal()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-medium py-2.5 rounded-xl shadow transition">
-        Understood
+      <div class="flex items-center gap-2">
+        <button id="switchUserBtn" class="text-xs bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-lg transition">
+          Switch User
+        </button>
+        <button id="resetDataBtn" class="text-xs bg-brand-700 hover:bg-brand-900 px-3 py-2 rounded-lg transition border border-brand-500">
+          Clear My Data
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-8 space-y-8">
+
+    <!-- 1. Expense Tracker Main Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <!-- Form Input -->
+      <div class="space-y-6">
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+          <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <i data-lucide="plus-circle" class="w-5 h-5 text-brand-600"></i> Add New Expense
+          </h2>
+          <form id="expenseForm" class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Description</label>
+              <input type="text" id="descInput" required placeholder="e.g. Cab fare, Museum Ticket" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none text-sm" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Amount</label>
+                <div class="relative">
+                  <span class="absolute left-3 top-2 text-slate-400 text-sm">&#8377;</span>
+                  <input type="number" step="0.01" min="0.01" id="amountInput" required placeholder="0.00" class="w-full pl-7 pr-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none text-sm" />
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Category</label>
+                <select id="categoryInput" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none text-sm bg-white">
+                  <option value="Transport">🚗 Transport</option>
+                  <option value="Food">🍽️ Food & Dining</option>
+                  <option value="Stay">🏨 Accommodation</option>
+                  <option value="Activities">🎟️ Activities</option>
+                  <option value="Shopping">🛍️ Shopping</option>
+                  <option value="Misc">📦 Miscellaneous</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Date</label>
+              <input type="date" id="dateInput" required class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none text-sm" />
+            </div>
+
+            <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white py-2.5 rounded-xl font-medium shadow-sm hover:shadow transition flex items-center justify-center gap-2">
+              <i data-lucide="plus" class="w-4 h-4"></i> Add Expense
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Right Column: Dashboard & Data List -->
+      <div class="lg:col-span-2 space-y-6">
+
+        <!-- Summary Metrics -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Spent</span>
+            <p id="totalSpentDisplay" class="text-2xl font-black text-brand-600 mt-2">&#8377;0.00</p>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Budget</span>
+            <p id="totalBudgetDisplay" class="text-2xl font-black text-slate-700 mt-2">&#8377;0.00</p>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Remaining</span>
+            <p id="remainingDisplay" class="text-2xl font-black text-emerald-600 mt-2">&#8377;0.00</p>
+          </div>
+        </div>
+
+        <!-- Budget Utilization Bar -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-xs font-semibold text-slate-600 uppercase">Budget Utilization</span>
+            <span id="progressPercent" class="text-xs font-bold text-slate-700">0%</span>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+            <div id="progressBar" class="bg-brand-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Expense Table -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <h3 class="text-lg font-bold text-slate-800">Transaction History</h3>
+            
+            <select id="filterCategory" class="px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none">
+              <option value="All">All Categories</option>
+              <option value="Transport">Transport</option>
+              <option value="Food">Food & Dining</option>
+              <option value="Stay">Accommodation</option>
+              <option value="Activities">Activities</option>
+              <option value="Shopping">Shopping</option>
+              <option value="Misc">Miscellaneous</option>
+            </select>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-slate-100 text-xs font-semibold text-slate-400 uppercase">
+                  <th class="py-3 px-3">Date</th>
+                  <th class="py-3 px-3">Category</th>
+                  <th class="py-3 px-3">Description</th>
+                  <th class="py-3 px-3 text-right">Amount</th>
+                  <th class="py-3 px-3 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody id="expenseList" class="divide-y divide-slate-50 text-sm">
+                <!-- Dynamically Populated -->
+              </tbody>
+            </table>
+            <div id="emptyState" class="py-10 text-center text-slate-400 hidden">
+              <i data-lucide="receipt" class="w-10 h-10 mx-auto mb-2 opacity-50"></i>
+              <p>No expenses recorded yet.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Hero Banner -->
+    <section id="hero" class="relative bg-slate-900 text-white py-16 px-6 rounded-2xl overflow-hidden shadow-lg border border-slate-800">
+      <div class="absolute inset-0 opacity-30 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1920&q=80');"></div>
+      <div class="relative max-w-3xl mx-auto text-center space-y-4">
+        <h2 class="text-3xl md:text-5xl font-extrabold tracking-tight">Discover Your Next Big Adventure</h2>
+        <p class="text-base md:text-lg text-slate-200">Customized itineraries, hidden gems, and seamless planning all in one place.</p>
+      </div>
+    </section>
+
+    <!-- 2. Dynamic Itinerary Section -->
+    <section id="itinerarySection" class="hidden bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-6">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-4 gap-2">
+        <div>
+          <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+            <i data-lucide="map-pin" class="w-5 h-5 text-brand-600"></i> Multi-Day Curated Itinerary
+          </h2>
+          <p id="itinerarySubtitle" class="text-xs text-slate-500 font-medium mt-0.5"></p>
+        </div>
+        <span id="dailyBudgetBadge" class="bg-brand-50 text-brand-700 border border-brand-200 text-xs font-semibold px-3 py-1 rounded-full"></span>
+      </div>
+
+      <!-- Dynamic Cards Grid -->
+      <div id="itineraryCardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Dynamically Populated via JS -->
+      </div>
+    </section>
+
+    <!-- 3. Trending Destinations Section -->
+    <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <i data-lucide="sparkles" class="w-5 h-5 text-brand-600"></i> Famous Attractions
+          </h2>
+          <p id="attractionsSubtitle" class="text-xs text-slate-500 font-medium">Top attractions in your chosen destination</p>
+        </div>
+      </div>
+      <div id="attractionsGrid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-4">
+        <!-- Dynamically populated via JS with famous attractions -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Budget Alert Modal Popup (Hidden by default) -->
+  <div id="budgetAlertModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-xl space-y-4 transform transition-all">
+      <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto">
+        <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+      </div>
+      <div>
+        <h3 class="text-lg font-bold text-slate-800">Budget Limit Warning</h3>
+        <p id="budgetAlertMessage" class="text-xs text-slate-600 mt-2 leading-relaxed">
+          You have reached over 75% of your total budget with this new expense.
+        </p>
+      </div>
+      <button id="closeAlertBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-medium text-xs py-2.5 rounded-xl transition shadow-sm">
+        I Understand
       </button>
     </div>
   </div>
 
-  <!-- Expense Tracker Header -->
-  <header class="bg-brand-600 text-white shadow-md">
-    <div class="max-w-6xl mx-auto px-4 py-6 flex justify-between items-center">
-      <div class="flex items-center space-x-3">
-        <div class="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-          <i data-lucide="plane-takeoff" class="w-6 h-6"></i>
-        </div>
-        <div>
-          <h1 class="text-2xl font-bold tracking-tight">BcKET</h1>
-          <p class="text-xs text-brand-100 font-medium">Travel Expense & Budget Tracker</p>
-        </div>
-      </div>
-      <button id="resetDataBtn" class="text-xs bg-brand-700 hover:bg-brand-900 px-3 py-2 rounded-lg transition border border-brand-500">
-        Clear All Data
-      </button>
-    </div>
-  </header>
-
-  <main class="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-    
-    <!-- Left Column: Inputs -->
-    <div class="space-y-6">
-      
-      <!-- Budget Limit Controls -->
-      <div class="bg-white rounded-2xl p-6 shadow-sm border border-cyan-100">
-        <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <i data-lucide="settings-2" class="w-5 h-5 text-brand-600"></i> Set Budget Limits
-        </h2>
-        <form id="budgetForm" class="space-y-4">
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Total Budget</label>
-            <div class="relative">
-              <span class="absolute left-3 top-2 text-slate-400 text-sm">&#8377;</span>
-              <input type="number" step="any" id="totalBudgetInput" placeholder="0.00" class="w-full pl-7 pr-3 py-2 border border-cyan-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none text-sm" />
-            </div>
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Daily Budget Limit</label>
-            <div class="relative">
-              <span class="absolute left-3 top-2 text-slate-400 text-sm">&#8377;</span>
-              <input type="number" step="any" id="dailyBudgetInput" placeholder="0.00" class="w-full pl-7 pr-3 py-2 border border-cyan-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none text-sm" />
-            </div>
-          </div>
-          <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-2.5 rounded-xl font-medium shadow-sm transition flex items-center justify-center gap-2 text-sm">
-            <i data-lucide="save" class="w-4 h-4"></i> Save Budget Limits
-          </button>
-        </form>
-      </div>
-
-      <!-- Add Expense Form -->
-      <div class="bg-white rounded-2xl p-6 shadow-sm border border-cyan-100">
-        <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <i data-lucide="plus-circle" class="w-5 h-5 text-brand-600"></i> Add New Expense
-        </h2>
-        <form id="expenseForm" class="space-y-4">
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Description</label>
-            <input type="text" id="descInput" required placeholder="e.g. Flight to Goa, Dinner" class="w-full px-3 py-2 border border-cyan-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none text-sm" />
-          </div>
-
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Amount</label>
-              <div class="relative">
-                <span class="absolute left-3 top-2 text-slate-400 text-sm">&#8377;</span>
-                <input type="number" step="any" id="amountInput" required placeholder="0.00" class="w-full pl-7 pr-3 py-2 border border-cyan-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none text-sm" />
-              </div>
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Category</label>
-              <select id="categoryInput" class="w-full px-3 py-2 border border-cyan-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none text-sm bg-white">
-                <option value="Transport">🚗 Transport</option>
-                <option value="Food">🍽️ Food & Dining</option>
-                <option value="Stay">🏨 Accommodation</option>
-                <option value="Activities">🎟️ Activities</option>
-                <option value="Shopping">🛍️ Shopping</option>
-                <option value="Misc">📦 Miscellaneous</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Date</label>
-            <input type="date" id="dateInput" required class="w-full px-3 py-2 border border-cyan-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none text-sm" />
-          </div>
-
-          <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white py-2.5 rounded-xl font-medium shadow-sm hover:shadow transition flex items-center justify-center gap-2">
-            <i data-lucide="plus" class="w-4 h-4"></i> Add Expense
-          </button>
-        </form>
-      </div>
-
-    </div>
-
-    <!-- Right Column: Analytics & Expense List -->
-    <div class="lg:col-span-2 space-y-6">
-
-      <!-- Summary Metrics Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        
-        <div class="bg-cyan-50/50 p-5 rounded-2xl border border-cyan-100 shadow-sm flex flex-col justify-between">
-          <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Spent</span>
-          <p id="totalSpentDisplay" class="text-2xl font-black text-brand-600 mt-2">&#8377;0.00</p>
-          <span id="todaySpentDisplay" class="text-xs text-slate-500 mt-1">Today: &#8377;0.00</span>
-        </div>
-
-        <div class="bg-cyan-50/50 p-5 rounded-2xl border border-cyan-100 shadow-sm flex flex-col justify-between">
-          <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Budget</span>
-          <p id="totalBudgetDisplay" class="text-2xl font-black text-slate-700 mt-2">&#8377;0.00</p>
-          <span id="dailyBudgetDisplay" class="text-xs text-slate-500 mt-1">Daily Limit: &#8377;0.00</span>
-        </div>
-
-        <div class="bg-cyan-50/50 p-5 rounded-2xl border border-cyan-100 shadow-sm flex flex-col justify-between">
-          <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Remaining</span>
-          <p id="remainingDisplay" class="text-2xl font-black text-emerald-600 mt-2">&#8377;0.00</p>
-          <span id="dailyRemainingDisplay" class="text-xs text-slate-500 mt-1">Today Left: &#8377;0.00</span>
-        </div>
-
-      </div>
-
-      <!-- Budget Progress Bar -->
-      <div class="bg-white p-5 rounded-2xl border border-cyan-100 shadow-sm">
-        <div class="flex justify-between items-center mb-2">
-          <span class="text-xs font-semibold text-slate-600 uppercase">Total Budget Utilization</span>
-          <span id="progressPercent" class="text-xs font-bold text-slate-700">0%</span>
-        </div>
-        <div class="w-full bg-cyan-50 rounded-full h-3 overflow-hidden">
-          <div id="progressBar" class="bg-brand-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
-        </div>
-      </div>
-
-      <!-- Expense List -->
-      <div class="bg-white rounded-2xl p-6 border border-cyan-100 shadow-sm">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <h3 class="text-lg font-bold text-slate-800">Transaction History</h3>
-          
-          <!-- Category Filter -->
-          <select id="filterCategory" class="px-3 py-1.5 border border-cyan-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white">
-            <option value="All">All Categories</option>
-            <option value="Transport">Transport</option>
-            <option value="Food">Food & Dining</option>
-            <option value="Stay">Accommodation</option>
-            <option value="Activities">Activities</option>
-            <option value="Shopping">Shopping</option>
-            <option value="Misc">Miscellaneous</option>
-          </select>
-        </div>
-
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="border-b border-cyan-100 text-xs font-semibold text-slate-400 uppercase">
-                <th class="py-3 px-3">Date</th>
-                <th class="py-3 px-3">Category</th>
-                <th class="py-3 px-3">Description</th>
-                <th class="py-3 px-3 text-right">Amount</th>
-                <th class="py-3 px-3 text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody id="expenseList" class="divide-y divide-cyan-50 text-sm">
-              <!-- Dynamically Populated -->
-            </tbody>
-          </table>
-          <div id="emptyState" class="py-10 text-center text-slate-400 hidden">
-            <i data-lucide="receipt" class="w-10 h-10 mx-auto mb-2 opacity-50 text-brand-600"></i>
-            <p>No expenses recorded yet.</p>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </main>
-
-  <!-- Navigation Header -->
-  <header class="bg-white shadow-sm sticky top-0 z-40 border-t border-cyan-100">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-      <div class="flex items-center space-x-2">
-        <i class="fa-solid fa-compass text-cyan-600 text-2xl"></i>
-        <span class="text-xl font-bold tracking-tight text-slate-900">BcKET</span>
-      </div>
-      <nav class="hidden md:flex space-x-6 text-sm font-medium text-slate-600">
-        <a href="#hero" class="hover:text-cyan-600 transition">Home</a>
-        <a href="#planner" class="hover:text-cyan-600 transition">Plan Trip</a>
-        <a href="#destinations" class="hover:text-cyan-600 transition">Destinations</a>
-        <a href="#itinerary-section" class="hover:text-cyan-600 transition">My Itinerary</a>
-      </nav>
-    </div>
-  </header>
-
-  <!-- Hero Section -->
-  <section id="hero" class="relative bg-cyan-900 text-white py-24 px-4 overflow-hidden">
-    <div class="absolute inset-0 opacity-20 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1920&q=80');"></div>
-    <div class="relative max-w-4xl mx-auto text-center space-y-6">
-      <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight">Discover Your Next Big Adventure</h1>
-      <p class="text-lg md:text-xl text-cyan-100">Customized itineraries, hidden gems, and seamless planning all in one place.</p>
-      <div class="pt-4">
-        <a href="#planner" class="inline-block bg-white text-cyan-900 font-semibold px-8 py-3 rounded-xl shadow-lg hover:bg-cyan-50 transition">
-          Build Your Itinerary Now
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- Destination Planner Form -->
-  <section id="planner" class="max-w-4xl mx-auto px-4 -mt-12 relative z-10 mb-16">
-    <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-cyan-100">
-      <h2 class="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-        <i class="fa-solid fa-sliders text-cyan-600"></i> Plan Your Journey
-      </h2>
-      <form id="tripForm" onsubmit="generateItinerary(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Destination</label>
-          <select id="destination" class="w-full rounded-lg border-cyan-200 border p-2.5 text-sm focus:ring-2 focus:ring-cyan-500 outline-none bg-white">
-            <option value="Kyoto">Kyoto, Japan</option>
-            <option value="Paris">Paris, France</option>
-            <option value="Bali">Bali, Indonesia</option>
-            <option value="Goa">Goa, India</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Duration (Days)</label>
-          <input type="number" id="days" value="3" min="1" max="7" class="w-full rounded-lg border-cyan-200 border p-2.5 text-sm focus:ring-2 focus:ring-cyan-500 outline-none">
-        </div>
-        <div class="md:col-span-3 pt-2">
-          <button type="submit" class="w-full bg-cyan-600 text-white font-medium py-3 rounded-lg shadow hover:bg-cyan-700 transition flex items-center justify-center gap-2">
-            <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Custom Itinerary
-          </button>
-        </div>
-      </form>
-    </div>
-  </section>
-
-  <!-- Itinerary Output Section -->
-  <section id="itinerary-section" class="max-w-5xl mx-auto px-4 mb-20 hidden">
-    <div class="bg-cyan-50 border border-cyan-100 rounded-2xl p-6 md:p-8">
-      <div class="flex justify-between items-center mb-6">
-        <h3 id="itineraryTitle" class="text-2xl font-bold text-cyan-900">Your Custom Itinerary</h3>
-        <span id="badgeStyle" class="bg-cyan-200 text-cyan-800 text-xs font-semibold px-3 py-1 rounded-full"></span>
-      </div>
-      <div id="itineraryContent" class="space-y-4">
-        <!-- Dynamic Content Injected Here -->
-      </div>
-    </div>
-  </section>
-
-  <!-- Popular Destinations Grid -->
-  <section id="destinations" class="max-w-7xl mx-auto px-4 mb-20">
-    <h2 class="text-3xl font-bold text-slate-900 mb-8 text-center">Trending Destinations</h2>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-      <!-- Card 1 -->
-      <div class="bg-white border border-cyan-100 rounded-xl shadow overflow-hidden group hover:shadow-lg transition">
-        <div class="h-48 bg-cover bg-center group-hover:scale-105 transition duration-300" style="background-image: url('https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=600&q=80');"></div>
-        <div class="p-5">
-          <div class="flex justify-between items-center mb-2">
-            <h3 class="font-bold text-lg text-slate-900">Kyoto, Japan</h3>
-            <span class="text-xs text-slate-500"><i class="fa-solid fa-star text-amber-400"></i> 4.9</span>
-          </div>
-          <p class="text-sm text-slate-600 mb-4">Ancient temples, bamboo forests, and traditional tea houses.</p>
-          <button onclick="selectDestination('Kyoto')" class="text-cyan-600 text-sm font-semibold hover:underline">Plan for Kyoto &rarr;</button>
-        </div>
-      </div>
-      <!-- Card 2 -->
-      <div class="bg-white border border-cyan-100 rounded-xl shadow overflow-hidden group hover:shadow-lg transition">
-        <div class="h-48 bg-cover bg-center group-hover:scale-105 transition duration-300" style="background-image: url('https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=600&q=80');"></div>
-        <div class="p-5">
-          <div class="flex justify-between items-center mb-2">
-            <h3 class="font-bold text-lg text-slate-900">Paris, France</h3>
-            <span class="text-xs text-slate-500"><i class="fa-solid fa-star text-amber-400"></i> 4.8</span>
-          </div>
-          <p class="text-sm text-slate-600 mb-4">Art, fashion, gastronomy, and iconic landmarks like the Eiffel Tower.</p>
-          <button onclick="selectDestination('Paris')" class="text-cyan-600 text-sm font-semibold hover:underline">Plan for Paris &rarr;</button>
-        </div>
-      </div>
-      <!-- Card 3 -->
-      <div class="bg-white border border-cyan-100 rounded-xl shadow overflow-hidden group hover:shadow-lg transition">
-        <div class="h-48 bg-cover bg-center group-hover:scale-105 transition duration-300" style="background-image: url('https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=600&q=80');"></div>
-        <div class="p-5">
-          <div class="flex justify-between items-center mb-2">
-            <h3 class="font-bold text-lg text-slate-900">Bali, Indonesia</h3>
-            <span class="text-xs text-slate-500"><i class="fa-solid fa-star text-amber-400"></i> 4.7</span>
-          </div>
-          <p class="text-sm text-slate-600 mb-4">Volcanic mountains, iconic rice paddies, and spiritual retreats.</p>
-          <button onclick="selectDestination('Bali')" class="text-cyan-600 text-sm font-semibold hover:underline">Plan for Bali &rarr;</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Footer -->
-  <footer class="bg-cyan-950 text-cyan-200 py-8 text-center text-sm border-t border-cyan-900">
-  </footer>
-
-  <!-- JavaScript Logic -->
   <script>
-    // State
-    let expenses = JSON.parse(localStorage.getItem('travel_expenses')) || [];
-    let budget = parseFloat(localStorage.getItem('travel_budget')) || 0;
-    let dailyBudget = parseFloat(localStorage.getItem('travel_daily_budget')) || 0;
-
-    const savedDestination = localStorage.getItem('selected_destination');
-
-    // Elements
-    const expenseForm = document.getElementById('expenseForm');
-    const descInput = document.getElementById('descInput');
-    const amountInput = document.getElementById('amountInput');
-    const categoryInput = document.getElementById('categoryInput');
-    const dateInput = document.getElementById('dateInput');
-    const resetDataBtn = document.getElementById('resetDataBtn');
-    const filterCategory = document.getElementById('filterCategory');
-    const expenseList = document.getElementById('expenseList');
-    const emptyState = document.getElementById('emptyState');
-
-    const budgetForm = document.getElementById('budgetForm');
-    const totalBudgetInput = document.getElementById('totalBudgetInput');
-    const dailyBudgetInput = document.getElementById('dailyBudgetInput');
-
-    const totalSpentDisplay = document.getElementById('totalSpentDisplay');
-    const todaySpentDisplay = document.getElementById('todaySpentDisplay');
-    const totalBudgetDisplay = document.getElementById('totalBudgetDisplay');
-    const dailyBudgetDisplay = document.getElementById('dailyBudgetDisplay');
-    const remainingDisplay = document.getElementById('remainingDisplay');
-    const dailyRemainingDisplay = document.getElementById('dailyRemainingDisplay');
-    const progressBar = document.getElementById('progressBar');
-    const progressPercent = document.getElementById('progressPercent');
-
-    dateInput.value = new Date().toISOString().split('T')[0];
-
-    // Populate budget form input fields
-    if (budget > 0) totalBudgetInput.value = budget;
-    if (dailyBudget > 0) dailyBudgetInput.value = dailyBudget;
-
-    const getCategoryBadge = (category) => {
-      const badges = {
-        Transport: 'bg-cyan-50 text-cyan-700 border-cyan-200',
-        Food: 'bg-amber-50 text-amber-700 border-amber-200',
-        Stay: 'bg-sky-50 text-sky-700 border-sky-200',
-        Activities: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-        Shopping: 'bg-purple-50 text-purple-700 border-purple-200',
-        Misc: 'bg-slate-50 text-slate-700 border-slate-200'
-      };
-      return badges[category] || badges.Misc;
-    };
-
-    function render() {
-      budget = parseFloat(localStorage.getItem('travel_budget')) || 0;
-      dailyBudget = parseFloat(localStorage.getItem('travel_daily_budget')) || 0;
-
-      const selectedCategory = filterCategory.value;
-      const filteredExpenses = selectedCategory === 'All' 
-        ? expenses 
-        : expenses.filter(e => e.category === selectedCategory);
-
-      expenseList.innerHTML = '';
-      if (filteredExpenses.length === 0) {
-        emptyState.classList.remove('hidden');
-      } else {
-        emptyState.classList.add('hidden');
-        filteredExpenses.forEach((exp) => {
-          const row = document.createElement('tr');
-          row.className = 'hover:bg-cyan-50/40 transition';
-          row.innerHTML = `
-            <td class="py-3 px-3 text-slate-500 text-xs">${exp.date}</td>
-            <td class="py-3 px-3">
-              <span class="inline-block px-2.5 py-1 rounded-full text-xs font-semibold border ${getCategoryBadge(exp.category)}">
-                ${exp.category}
-              </span>
-            </td>
-            <td class="py-3 px-3 font-medium text-slate-800">${exp.desc}</td>
-            <td class="py-3 px-3 text-right font-bold text-slate-800">&#8377;${exp.amount.toFixed(2)}</td>
-            <td class="py-3 px-3 text-center">
-              <button onclick="deleteExpense('${exp.id}')" class="text-slate-400 hover:text-red-500 transition p-1 rounded-lg">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
-              </button>
-            </td>
-          `;
-          expenseList.appendChild(row);
-        });
-      }
-
-      const totalSpent = expenses.reduce((acc, curr) => acc + (curr.amount || 0), 0);
-      const todayDate = new Date().toISOString().split('T')[0];
-      const todaySpent = expenses
-        .filter(exp => exp.date === todayDate)
-        .reduce((acc, curr) => acc + (curr.amount || 0), 0);
-
-      const remaining = budget - totalSpent;
-      const dailyRemaining = dailyBudget - todaySpent;
-      const rawPercentage = budget > 0 ? (totalSpent / budget) * 100 : 0;
-      const displayPercentage = Math.min(rawPercentage, 100);
-
-      totalSpentDisplay.textContent = `\u20B9${totalSpent.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-      todaySpentDisplay.textContent = `Today: \u20B9${todaySpent.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-
-      totalBudgetDisplay.textContent = `\u20B9${budget.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-      dailyBudgetDisplay.textContent = `Daily Limit: \u20B9${dailyBudget.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-      
-      remainingDisplay.textContent = `\u20B9${remaining.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-      dailyRemainingDisplay.textContent = `Today Left: \u20B9${dailyRemaining.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-
-      if (remaining < 0) {
-        remainingDisplay.className = "text-2xl font-black text-red-600 mt-2";
-      } else {
-        remainingDisplay.className = "text-2xl font-black text-emerald-600 mt-2";
-      }
-
-      progressBar.style.width = `${displayPercentage}%`;
-      progressPercent.textContent = `${rawPercentage.toFixed(0)}%`;
-      if (rawPercentage >= 100) {
-        progressBar.className = "bg-red-500 h-3 rounded-full transition-all duration-300";
-      } else if (rawPercentage >= 75) {
-        progressBar.className = "bg-amber-500 h-3 rounded-full transition-all duration-300";
-      } else {
-        progressBar.className = "bg-brand-600 h-3 rounded-full transition-all duration-300";
-      }
-
-      if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-      }
-    }
-
-    // Modal popup helper function
-    function showModal(messageHtml) {
-      document.getElementById('modalMessage').innerHTML = messageHtml;
-      document.getElementById('budgetModal').classList.remove('hidden');
-    }
-
-    function closeModal() {
-      document.getElementById('budgetModal').classList.add('hidden');
-    }
-
-    // Threshold alert check (75%)
-    function checkBudgetThresholds() {
-      const todayDate = new Date().toISOString().split('T')[0];
-      const totalSpent = expenses.reduce((acc, curr) => acc + (curr.amount || 0), 0);
-      const todaySpent = expenses
-        .filter(exp => exp.date === todayDate)
-        .reduce((acc, curr) => acc + (curr.amount || 0), 0);
-
-      let warnings = [];
-
-      if (budget > 0 && totalSpent >= budget * 0.75) {
-        const percent = Math.round((totalSpent / budget) * 100);
-        warnings.push(`⚠️ You have used <strong>${percent}%</strong> of your <strong>Total Budget</strong> (\u20B9${totalSpent.toFixed(2)} / \u20B9${budget.toFixed(2)}).`);
-      }
-
-      if (dailyBudget > 0 && todaySpent >= dailyBudget * 0.75) {
-        const percent = Math.round((todaySpent / dailyBudget) * 100);
-        warnings.push(`⚠️ You have used <strong>${percent}%</strong> of today's <strong>Daily Budget</strong> (\u20B9${todaySpent.toFixed(2)} / \u20B9${dailyBudget.toFixed(2)}).`);
-      }
-
-      if (warnings.length > 0) {
-        showModal(warnings.join('<br/><br/>'));
-      }
-    }
-
-    function saveState() {
-      localStorage.setItem('travel_expenses', JSON.stringify(expenses));
-      render();
-    }
-
-    // Save Budget Limits Form Event
-    budgetForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const newTotalBudget = parseFloat(totalBudgetInput.value) || 0;
-      const newDailyBudget = parseFloat(dailyBudgetInput.value) || 0;
-
-      localStorage.setItem('travel_budget', newTotalBudget);
-      localStorage.setItem('travel_daily_budget', newDailyBudget);
-      render();
-      checkBudgetThresholds();
-    });
-
-    // Add Expense Event
-    expenseForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const parsedAmount = parseFloat(amountInput.value);
-      if (isNaN(parsedAmount) || parsedAmount <= 0) return;
-
-      const newExpense = {
-        id: Date.now().toString(),
-        desc: descInput.value.trim(),
-        amount: parsedAmount,
-        category: categoryInput.value,
-        date: dateInput.value
-      };
-
-      expenses.unshift(newExpense);
-      saveState();
-
-      descInput.value = '';
-      amountInput.value = '';
-      descInput.focus();
-
-      // Trigger warning pop-up if limits are reached/exceeded
-      checkBudgetThresholds();
-    });
-
-    window.deleteExpense = function(id) {
-      expenses = expenses.filter(exp => exp.id !== id);
-      saveState();
-    };
-
-    filterCategory.addEventListener('change', render);
-
-    resetDataBtn.addEventListener('click', () => {
-      if (confirm("Are you sure you want to clear all expenses and budget data?")) {
-        expenses = [];
-        budget = 0;
-        dailyBudget = 0;
-        localStorage.clear();
-        totalBudgetInput.value = '';
-        dailyBudgetInput.value = '';
-        render();
-      }
-    });
-
-    const sampleItineraries = {
-      Kyoto: [
-        "Day 1: Arrival & Fushimi Inari Shrine walk through thousands of vermilion torii gates.",
-        "Day 2: Explore the historic Arashiyama Bamboo Grove and visit the Kinkaku-ji (Golden Pavilion).",
-        "Day 3: Traditional tea ceremony in Gion and shopping for local crafts on Ninenzaka slope."
+    const CITY_DATABASE = {
+      "Delhi": [
+        { name: "Red Fort & Old Delhi", entry: 50, img: "https://images.unsplash.com/photo-1597040639427-419165365a49?w=500&auto=format&fit=crop", desc: "Explore Shah Jahan's historic red sandstone fortress and Chandni Chowk." },
+        { name: "Humayun's Tomb", entry: 40, img: "https://images.unsplash.com/photo-1592639296346-560c37a0f711?w=500&auto=format&fit=crop", desc: "Walk through Persian-style Charbagh gardens surrounding this UNESCO heritage site." },
+        { name: "India Gate & Kartavya Path", entry: 0, img: "https://images.unsplash.com/photo-1608459469599-e655074251ad?w=500&auto=format&fit=crop", desc: "Stroll along the sprawling national ceremonial boulevard to admire the war memorial." },
+        { name: "Qutub Minar Complex", entry: 40, img: "https://images.unsplash.com/photo-1548013146-72479768bada?w=500&auto=format&fit=crop", desc: "Marvel at the world's tallest brick minaret and ancient Iron Pillar of Delhi." },
+        { name: "Lotus Temple", entry: 0, img: "https://images.unsplash.com/photo-1590050752117-238cb0fb12b1?w=500&auto=format&fit=crop", desc: "Experience serene silent meditation inside this lotus-flower shaped Bahá'í House of Worship." },
+        { name: "Akshardham Water Show", entry: 90, img: "https://images.unsplash.com/photo-1627894006066-b45785055b8e?w=500&auto=format&fit=crop", desc: "Witness the spectacular Sahaj Anand water display with lasers and lights." },
+        { name: "Lodhi Art District", entry: 0, img: "https://images.unsplash.com/photo-1561055657-b9e0bf0fa360?w=500&auto=format&fit=crop", desc: "Open-air public art gallery featuring larger-than-life murals by global street artists." },
+        { name: "Jama Masjid", entry: 0, img: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=500&auto=format&fit=crop", desc: "Ascend the minaret of India's iconic 17th-century congregational mosque." },
+        { name: "Hauz Khas Village & Lake", entry: 0, img: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=500&auto=format&fit=crop", desc: "A blend of 14th-century Delhi Sultanate ruins, scenic reservoirs, and cafes." },
+        { name: "National Museum", entry: 20, img: "https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?w=500&auto=format&fit=crop", desc: "Discover over 200,000 historic treasures ranging from Harappan bronze to Buddhist relics." },
+        { name: "Agrasen ki Baoli", entry: 0, img: "https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?w=500&auto=format&fit=crop", desc: "Descend into a fascinating 108-step historic stepwell hidden in Connaught Place." },
+        { name: "Garden of Five Senses", entry: 35, img: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=500&auto=format&fit=crop", desc: "Relax in a 20-acre sensory park featuring bamboo courts and fragrant flower gardens." },
+        { name: "National Gallery of Modern Art", entry: 20, img: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=500&auto=format&fit=crop", desc: "View premier collections of modern Indian painting, sculptures, and installations." },
+        { name: "Crafts Museum Pragati Maidan", entry: 20, img: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=500&auto=format&fit=crop", desc: "Explore rural village huts, live artisan demonstrations, and rare traditional crafts." },
+        { name: "Sunder Nursery Heritage Park", entry: 50, img: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=500&auto=format&fit=crop", desc: "A restored 90-acre Mughal-era heritage park boasting 6 UNESCO World Heritage monuments." },
+        { name: "Safdarjung Tomb", entry: 25, img: "https://images.unsplash.com/photo-1592639296346-560c37a0f711?w=500&auto=format&fit=crop", desc: "Admire the late Mughal red sandstone garden tomb constructed in 1754." },
+        { name: "Gurudwara Bangla Sahib", entry: 0, img: "https://images.unsplash.com/photo-1616423640778-28d1b53229bd?w=500&auto=format&fit=crop", desc: "Visit the iconic golden-domed Sikh shrine with a sacred reflection pool and community kitchen." },
+        { name: "Chhatarpur Temple Complex", entry: 0, img: "https://images.unsplash.com/photo-1616423640778-28d1b53229bd?w=500&auto=format&fit=crop", desc: "Sprawling 70-acre South Indian and North Indian style marble temple sanctuary." },
+        { name: "Purana Qila & Boat Ride", entry: 30, img: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=500&auto=format&fit=crop", desc: "Walk ancient stone fort walls of Sher Shah Suri and enjoy scenic boating on the moat." },
+        { name: "Janpath & State Emporiums", entry: 0, img: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=500&auto=format&fit=crop", desc: "Shop authentic handicrafts, carpets, and textiles direct from government state stalls." },
+        { name: "Asola Bhatti Wildlife Sanctuary", entry: 100, img: "https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=500&auto=format&fit=crop", desc: "Trek through Arvalli hill forests to discover hidden turquoise blue mining lakes." },
+        { name: "Waste to Wonder Park", entry: 50, img: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=500&auto=format&fit=crop", desc: "Marvel at replica sculptures of Seven Wonders built entirely out of scrap industrial waste." }
       ],
-      Paris: [
-        "Day 1: Morning stroll along the Seine, afternoon at the Louvre Museum, and evening Eiffel Tower views.",
-        "Day 2: Explore the artistic Montmartre neighborhood and visit the magnificent Sacré-Cœur.",
-        "Day 3: Day trip or shopping spree down the Champs-Élysées with classic French café dining."
+      "Mumbai": [
+        { name: "Gateway of India", entry: 0, img: "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=500&auto=format&fit=crop", desc: "Stand before the grand 26-meter basalt arch overlooking the Arabian Sea." },
+        { name: "Marine Drive Walk", entry: 0, img: "https://images.unsplash.com/photo-1567157577867-05ccb1388e66?w=500&auto=format&fit=crop", desc: "Stroll along the 3.6-kilometer seaside promenade known as the Queen's Necklace." },
+        { name: "Juhu Beach Street Food", entry: 0, img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&auto=format&fit=crop", desc: "Soak in coastal sunset views while savoring spicy Pav Bhaji and Bhel Puri." },
+        { name: "Elephanta Caves Ferry", entry: 260, img: "https://images.unsplash.com/photo-1626014903708-ec902094c3d2?w=500&auto=format&fit=crop", desc: "Ferry trip to 5th-century rock-cut cave temples dedicated to Lord Shiva." },
+        { name: "Chhatrapati Shivaji Terminus", entry: 0, img: "https://images.unsplash.com/photo-1572205336203-02f8373b9e40?w=500&auto=format&fit=crop", desc: "Victorian Gothic UNESCO World Heritage train station featuring ornate stone vaults." },
+        { name: "Bandra Fort & Sea Link", entry: 0, img: "https://images.unsplash.com/photo-1595658658421-a9ac457190ca?w=500&auto=format&fit=crop", desc: "Panoramic views of Bandra-Worli Sea Link from 17th-century Portuguese fort ruins." },
+        { name: "Sanjay Gandhi National Park", entry: 85, img: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=500&auto=format&fit=crop", desc: "Sprawling urban rainforest housing ancient rock-cut Kanheri Buddhist Caves." },
+        { name: "Chhatrapati Shivaji Museum", entry: 150, img: "https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?w=500&auto=format&fit=crop", desc: "Indo-Saracenic building displaying over 50,000 rare historic artifacts." },
+        { name: "Haji Ali Dargah", entry: 0, img: "https://images.unsplash.com/photo-1609137144813-7d9921338f24?w=500&auto=format&fit=crop", desc: "Walk across a narrow causeway to visit this famous 15th-century sea shrine." },
+        { name: "Colaba Causeway Market", entry: 0, img: "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=500&auto=format&fit=crop", desc: "Bargain for vintage jewelry, handicrafts, and clothes on South Mumbai's shopping strip." },
+        { name: "Global Vipassana Pagoda", entry: 0, img: "https://images.unsplash.com/photo-1609766857041-ed402ea8069a?w=500&auto=format&fit=crop", desc: "World's largest pillarless stone dome built in Gorai for meditation and peace." },
+        { name: "Taraporewala Aquarium", entry: 60, img: "https://images.unsplash.com/photo-1524704654690-b56c05c78a00?w=500&auto=format&fit=crop", desc: "Historic marine aquarium featuring a 180-degree glass acrylic tunnel." },
+        { name: "Jehangir Art Gallery", entry: 0, img: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=500&auto=format&fit=crop", desc: "Premieres leading modern contemporary Indian art exhibitions in Kala Ghoda." },
+        { name: "Chor Bazaar Antique Market", entry: 0, img: "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=500&auto=format&fit=crop", desc: "Hunt through legendary vintage flea markets for antique clocks, gramophones, and trinkets." },
+        { name: "Babulnath Temple", entry: 0, img: "https://images.unsplash.com/photo-1616423640778-28d1b53229bd?w=500&auto=format&fit=crop", desc: "Ascend 180 stone steps to an ancient 12th-century hill temple dedicated to Lord Shiva." },
+        { name: "Versova Beach & Rock Promenade", entry: 0, img: "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=500&auto=format&fit=crop", desc: "Peaceful coastal stretch famous for community beach cleanups and sunset fishing boats." },
+        { name: "Nehru Centre & Planetarium", entry: 100, img: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=500&auto=format&fit=crop", desc: "Domed astronomy theater and interactive Indian culture and discovery pavilion." },
+        { name: "Worli Fort", entry: 0, img: "https://images.unsplash.com/photo-1595658658421-a9ac457190ca?w=500&auto=format&fit=crop", desc: "Walk through historic Worli Koliwada fishing village to reach a 1675 British coastal watchtower." },
+        { name: "Mahalaxmi Racecourse", entry: 0, img: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=500&auto=format&fit=crop", desc: "Watch morning horse training sessions along 225 acres of open South Mumbai green turf." },
+        { name: "Dr. Bhau Daji Lad Museum", entry: 20, img: "https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?w=500&auto=format&fit=crop", desc: "Mumbai's oldest museum in Byculla showcasing Victorian interiors and city maps." },
+        { name: "Sassoon Docks Fish Market", entry: 0, img: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500&auto=format&fit=crop", desc: "Experience early morning bustle at Mumbai's historic 1875 commercial fishing harbor." },
+        { name: "Sewri Mangrove & Flamingo Point", entry: 0, img: "https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=500&auto=format&fit=crop", desc: "Observe thousands of migratory pink flamingos feeding along coastal mudflats in winter." }
       ],
-      Bali: [
-        "Day 1: Relax on Seminyak beach and watch the sunset at Uluwatu Temple.",
-        "Day 2: Explore Ubud's Monkey Forest, art markets, and Tegallalang Rice Terraces.",
-        "Day 3: Island boat tour to Nusa Penida for crystal clear snorkeling spots."
+      "Bengaluru": [
+        { name: "Lalbagh Botanical Garden", entry: 25, img: "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=500&auto=format&fit=crop", desc: "240 acres of rare flora surrounding a 19th-century Glass House." },
+        { name: "Bangalore Palace", entry: 240, img: "https://images.unsplash.com/photo-1600011689032-8b628b8a8747?w=500&auto=format&fit=crop", desc: "Tudor-style architecture complete with fortified towers and wood carvings." },
+        { name: "Church Street & MG Road", entry: 0, img: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=500&auto=format&fit=crop", desc: "Cobblestone streets with vintage bookstores, microbreweries, and cafes." },
+        { name: "Cubbon Park & Vidhana Soudha", entry: 0, img: "https://images.unsplash.com/photo-1588416936097-41850ab3d86d?w=500&auto=format&fit=crop", desc: "300 acres of green parkland facing the neo-Dravidian state legislature." },
+        { name: "Tipu Sultan's Summer Palace", entry: 20, img: "https://images.unsplash.com/photo-1608459469599-e655074251ad?w=500&auto=format&fit=crop", desc: "Examine intricate teakwood pillars inside the 1791 royal summer retreat." },
+        { name: "Bannerghatta National Park", entry: 300, img: "https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=500&auto=format&fit=crop", desc: "Board a wildlife safari bus to spot tigers, lions, and bears." },
+        { name: "ISKCON Bangalore Temple", entry: 0, img: "https://images.unsplash.com/photo-1616423640778-28d1b53229bd?w=500&auto=format&fit=crop", desc: "Grand modern spiritual complex featuring lush gardens and food court." },
+        { name: "Visvesvaraya Industrial Museum", entry: 85, img: "https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=500&auto=format&fit=crop", desc: "Interactive physics, aviation, and engineering exhibits for all ages." },
+        { name: "Ulsoor Lake Boat Ride", entry: 50, img: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=500&auto=format&fit=crop", desc: "Pedal boat around peaceful forested islands in one of the city's oldest lakes." },
+        { name: "HAL Aerospace Museum", entry: 50, img: "https://images.unsplash.com/photo-1519074069444-1ba4efe96836?w=500&auto=format&fit=crop", desc: "Retired IAF fighter jets, helicopters, commercial aircraft, and simulators." },
+        { name: "Commercial Street Shopping", entry: 0, img: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=500&auto=format&fit=crop", desc: "Lanes filled with silk sarees, silver jewelry, and vibrant textile shops." },
+        { name: "Nandi Hills Sunset Point", entry: 20, img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&auto=format&fit=crop", desc: "Drive up winding hill roads 4,800 feet above sea level for cloudscapes." },
+        { name: "Jawaharlal Nehru Planetarium", entry: 75, img: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=500&auto=format&fit=crop", desc: "Immersive space exploration shows and outdoor interactive science park." },
+        { name: "St. Mary's Basilica Shivajinagar", entry: 0, img: "https://images.unsplash.com/photo-1548625149-fc4a29cf7092?w=500&auto=format&fit=crop", desc: "Gothic style basilica built in 1882 featuring stained glass windows." },
+        { name: "National Gallery of Modern Art", entry: 20, img: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=500&auto=format&fit=crop", desc: "Colonial heritage mansion displaying Indian master art amidst quiet garden paths." },
+        { name: "Bull Temple (Dodda Basavana Gudi)", entry: 0, img: "https://images.unsplash.com/photo-1616423640778-28d1b53229bd?w=500&auto=format&fit=crop", desc: "16th-century Dravidian temple featuring a massive granite Nandi bull monolith." },
+        { name: "Sankey Tank Park", entry: 0, img: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=500&auto=format&fit=crop", desc: "Man-made 1875 reservoir surrounded by jogging paths, ducks, and green canopy." },
+        { name: "Gandhi Bhavan Museum", entry: 0, img: "https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?w=500&auto=format&fit=crop", desc: "Tranquil memorial archive housing photographs and letters of Mahatma Gandhi." },
+        { name: "Malleswaram Heritage Walk", entry: 0, img: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=500&auto=format&fit=crop", desc: "Walk old Bengaluru tree-lined streets, traditional flower markets, and dose eateries." },
+        { name: "Indiranagar 100ft Road", entry: 0, img: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=500&auto=format&fit=crop", desc: "Explore fashion boutiques, artisanal coffee roasters, and rooftop dining hubs." },
+        { name: "Karnataka Chitrakala Parishath", entry: 20, img: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=500&auto=format&fit=crop", desc: "Art complex housing Mysore traditional gold foil paintings and folk sculptures." },
+        { name: "Turahalli Forest Reserve", entry: 0, img: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=500&auto=format&fit=crop", desc: "Bengaluru's last surviving mini forest reserve ideal for rock climbing and trail hikes." }
       ],
-      Goa: [
-        "Day 1: Relax at Baga or Calangute Beach and sample authentic Goan fish curry.",
-        "Day 2: Visit Old Goa's UNESCO heritage churches and spice plantations.",
-        "Day 3: Sunset cruise on the Mandovi river and vibrant beachside nightlife."
+      "Kolkata": [
+        { name: "Victoria Memorial", entry: 50, img: "https://images.unsplash.com/photo-1558431382-27e303142255?w=500&auto=format&fit=crop", desc: "White Makrana marble monument surrounded by 64 acres of pristine lawns." },
+        { name: "Howrah Bridge & Flower Market", entry: 0, img: "https://images.unsplash.com/photo-1590050752117-238cb0fb12b1?w=500&auto=format&fit=crop", desc: "Cantilever bridge over Hooghly river and 140-year-old flower market." },
+        { name: "Park Street Heritage Dining", entry: 0, img: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500&auto=format&fit=crop", desc: "Sample Kolkata Kathi rolls, colonial bakeries, and live jazz venues." },
+        { name: "Dakshineswar Kali Temple", entry: 0, img: "https://images.unsplash.com/photo-1621849400072-f584d675714a?w=500&auto=format&fit=crop", desc: "Navaratna-style 1855 temple compound on the eastern bank of the Hooghly." },
+        { name: "Indian Museum", entry: 50, img: "https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?w=500&auto=format&fit=crop", desc: "Oldest museum in Asia founded in 1814, featuring ancient fossils and mummies." },
+        { name: "Princep Ghat Boat Ride", entry: 100, img: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500&auto=format&fit=crop", desc: "Traditional wooden boat ride under Vidyasagar Setu suspension bridge." },
+        { name: "Kumartuli Artisan Village", entry: 0, img: "https://images.unsplash.com/photo-1567157577867-05ccb1388e66?w=500&auto=format&fit=crop", desc: "Narrow lanes where generations of clay artisans sculpt Durga Puja idols." },
+        { name: "St. Paul's Cathedral", entry: 0, img: "https://images.unsplash.com/photo-1548625149-fc4a29cf7092?w=500&auto=format&fit=crop", desc: "Indo-Gothic architecture and magnificent stained glass windows in 1847 cathedral." },
+        { name: "College Street Book Market", entry: 0, img: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=500&auto=format&fit=crop", desc: "World's largest secondhand book market, known locally as Boi Para." },
+        { name: "Belur Math", entry: 0, img: "https://images.unsplash.com/photo-1609137144813-7d9921338f24?w=500&auto=format&fit=crop", desc: "Headquarters of Ramakrishna Math, unifying Christian, Islamic, and Hindu motifs." },
+        { name: "Eco Park New Town", entry: 30, img: "https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=500&auto=format&fit=crop", desc: "480-acre park featuring life-sized replicas of Seven Wonders of the World." },
+        { name: "Science City Kolkata", entry: 60, img: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=500&auto=format&fit=crop", desc: "Space Odyssey theaters, ropeway rides, and motion simulators." },
+        { name: "Marble Palace Mansion", entry: 0, img: "https://images.unsplash.com/photo-1600011689032-8b628b8a8747?w=500&auto=format&fit=crop", desc: "1835 palatial mansion filled with marble walls, European statues, and paintings." },
+        { name: "Jorasanko Thakurbari", entry: 20, img: "https://images.unsplash.com/photo-1590050752117-238cb0fb12b1?w=500&auto=format&fit=crop", desc: "Ancestral home of Nobel laureate Rabindranath Tagore, now a cultural museum." },
+        { name: "Acharya Jagadish Chandra Bose Botanical Garden", entry: 50, img: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=500&auto=format&fit=crop", desc: "Home to the famous 250-year-old Great Banyan Tree in Shibpur." },
+        { name: "Alipore Zoological Gardens", entry: 30, img: "https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=500&auto=format&fit=crop", desc: "India's oldest formally established zoo housing reptiles, tigers, and birds." },
+        { name: "Kalighat Temple", entry: 0, img: "https://images.unsplash.com/photo-1621849400072-f584d675714a?w=500&auto=format&fit=crop", desc: "One of the 51 sacred Shakti Peethas located along Adi Ganga canal." },
+        { name: "Mother House (Missionaries of Charity)", entry: 0, img: "https://images.unsplash.com/photo-1616423640778-28d1b53229bd?w=500&auto=format&fit=crop", desc: "Visit the tomb and humble living quarters of Saint Mother Teresa." },
+        { name: "Birla Planetarium", entry: 100, img: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=500&auto=format&fit=crop", desc: "Buddhist Sanchi Stupa-inspired planetarium projector theater." },
+        { name: "New Market (Sir Stuart Hogg Market)", entry: 0, img: "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=500&auto=format&fit=crop", desc: "Historic 1874 red brick arcade housing over 2,000 retail shopping stalls." },
+        { name: "Nabadwip Tram Ride & Maidan Walk", entry: 20, img: "https://images.unsplash.com/photo-1572205336203-02f8373b9e40?w=500&auto=format&fit=crop", desc: "Ride Asia's oldest operating vintage electric streetcar across Kolkata's central park." },
+        { name: "Sobhabazar Rajbari", entry: 0, img: "https://images.unsplash.com/photo-1600011689032-8b628b8a8747?w=500&auto=format&fit=crop", desc: "Royal palace complex famous for historic courtyard architecture and heritage festivals." }
+      ],
+      "Chennai": [
+        { name: "Kapaleeshwarar Temple", entry: 0, img: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=500&auto=format&fit=crop", desc: "Towering 37-meter rainbow Gopuram at this 7th-century Mylapore temple." },
+        { name: "Marina Beach Promenade", entry: 0, img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&auto=format&fit=crop", desc: "World's second-longest urban beach promenade with street food stalls." },
+        { name: "San Thome Cathedral Basilica", entry: 0, img: "https://images.unsplash.com/photo-1548625149-fc4a29cf7092?w=500&auto=format&fit=crop", desc: "Sparkling white Neo-Gothic cathedral over the 1st-century tomb of St. Thomas." },
+        { name: "Fort St. George & Museum", entry: 20, img: "https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?w=500&auto=format&fit=crop", desc: "First British fortress built in India in 1644 with military relics." },
+        { name: "Government Museum Chennai", entry: 15, img: "https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?w=500&auto=format&fit=crop", desc: "Inspect world-famous 10th-century Chola bronze sculptures including Nataraja." },
+        { name: "Elliot's Beach (Besant Nagar)", entry: 0, img: "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=500&auto=format&fit=crop", desc: "Peaceful coastal shoreline featuring the Schmidt Memorial and seaside cafes." },
+        { name: "DakshinaChitra Living Museum", entry: 175, img: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=500&auto=format&fit=crop", desc: "18 authentic heritage houses representing traditional lifestyle of South India." },
+        { name: "Guindy National Park", entry: 20, img: "https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=500&auto=format&fit=crop", desc: "Protected evergreen forest within city limits housing spotted deer and blackbucks." },
+        { name: "Theosophical Society Gardens", entry: 0, img: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=500&auto=format&fit=crop", desc: "260 acres of peaceful forest sanctuaries containing a 450-year-old Great Banyan Tree." },
+        { name: "Valluvar Kottam", entry: 20, img: "https://images.unsplash.com/photo-1600011689032-8b628b8a8747?w=500&auto=format&fit=crop", desc: "39-meter granite temple chariot monument honoring Tamil poet Thiruvalluvar." },
+        { name: "MGR Film City", entry: 50, img: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=500&auto=format&fit=crop", desc: "Outdoor film sets and studio backlots used across South Indian cinema." },
+        { name: "Covelong Beach Surfing Point", entry: 0, img: "https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=500&auto=format&fit=crop", desc: "Fishing village famous for sandy beaches, surf schools, and coastal seafood." },
+        { name: "Mahabalipuram Shore Temple & Reliefs", entry: 40, img: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=500&auto=format&fit=crop", desc: "7th-century UNESCO rock cut shore temples and Arjuna's Penance bass-relief." },
+        { name: "Arignar Anna Zoological Park (Vandalur)", entry: 50, img: "https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=500&auto=format&fit=crop", desc: "Sprawling 1,500-acre flora and fauna safari park south of Chennai." },
+        { name: "Parthasarathy Temple Triplicane", entry: 0, img: "https://images.unsplash.com/photo-1616423640778-28d1b53229bd?w=500&auto=format&fit=crop", desc: "8th-century Vaishnavite temple featuring complex granite carved pillars." },
+        { name: "Pulicat Lake Bird Sanctuary", entry: 0, img: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=500&auto=format&fit=crop", desc: "India's second largest brackish water lagoon teeming with flamingos and pelicans." },
+        { name: "Semmozhi Poonga Botanical Park", entry: 15, img: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=500&auto=format&fit=crop", desc: "20-acre lush city garden featuring medicinal plants, bonsai, and fern gardens." },
+        { name: "Birla Planetarium Chennai", entry: 30, img: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=500&auto=format&fit=crop", desc: "Periyar Science Center featuring digital sky shows and astronomy galleries." },
+        { name: "T. Nagar Ranganathan Street", entry: 0, img: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=500&auto=format&fit=crop", desc: "Bustling retail commercial hub famous for Kanchipuram silk sarees and jewelry." },
+        { name: "Connemara Public Library", entry: 0, img: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=500&auto=format&fit=crop", desc: "1896 National Depository library featuring century-old wooden reading halls." },
+        { name: "Cholamandal Artists' Village", entry: 20, img: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=500&auto=format&fit=crop", desc: "India's largest self-supporting artists' commune displaying modern sculptures." },
+        { name: "Muttukadu Boat House", entry: 120, img: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=500&auto=format&fit=crop", desc: "Watersports facility offering speedboats, jet skis, and pedal boats on backwaters." }
+      ],
+      "Hyderabad": [
+        { name: "Charminar & Laad Bazaar", entry: 25, img: "https://images.unsplash.com/photo-1605649487212-47bdab064df7?w=500&auto=format&fit=crop", desc: "1591 landmark mosque archway and hand-crafted lac bangle shops." },
+        { name: "Chowmahalla Palace", entry: 100, img: "https://images.unsplash.com/photo-1600011689032-8b628b8a8747?w=500&auto=format&fit=crop", desc: "Seat of Asaf Jahi dynasty featuring ornate chandeliers and vintage Rolls-Royces." },
+        { name: "Golconda Fort", entry: 25, img: "https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?w=500&auto=format&fit=crop", desc: "Acoustic clapping tricks and historic citadel gates of diamond mines." },
+        { name: "Hussain Sagar Lake", entry: 0, img: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=500&auto=format&fit=crop", desc: "Ferry ride across the lake to visit the colossal 18-meter monolithic Buddha statue." },
+        { name: "Qutb Shahi Tombs", entry: 20, img: "https://images.unsplash.com/photo-1592639296346-560c37a0f711?w=500&auto=format&fit=crop", desc: "21 domed grand mausoleums surrounded by landscaped Persian-style gardens." },
+        { name: "Salar Jung Museum", entry: 50, img: "https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?w=500&auto=format&fit=crop", desc: "View the Veiled Rebecca marble statue in one of the world's largest solo art collections." },
+        { name: "Ramoji Film City", entry: 1350, img: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=500&auto=format&fit=crop", desc: "World's largest film studio complex spanning 2,000 acres of movie sets." },
+        { name: "Birla Mandir", entry: 0, img: "https://images.unsplash.com/photo-1616423640778-28d1b53229bd?w=500&auto=format&fit=crop", desc: "Hilltop pure white marble temple constructed using 2,000 tons of Rajasthani stone." },
+        { name: "Nehru Zoological Park", entry: 70, img: "https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=500&auto=format&fit=crop", desc: "Drive-through safari enclosures to observe Asiatic lions and Royal Bengal tigers." },
+        { name: "Lumbini Park", entry: 20, img: "https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=500&auto=format&fit=crop", desc: "Relaxed evening lakefront walks and 3D laser light water shows." },
+        { name: "NTR Gardens", entry: 20, img: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=500&auto=format&fit=crop", desc: "Ride a mini monorail and explore giant insect sculptures near the waterfront." },
+        { name: "Shilparamam Arts Village", entry: 60, img: "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=500&auto=format&fit=crop", desc: "Traditional crafts village in HITEC City showcasing rural Indian art and folk dance." },
+        { name: "Faluknama Palace Heritage View", entry: 0, img: "https://images.unsplash.com/photo-1600011689032-8b628b8a8747?w=500&auto=format&fit=crop", desc: "Marvel at the Nizam's hilltop scorpion-shaped Italian marble palace palace exterior." },
+        { name: "Sudha Cars Museum", entry: 50, img: "https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=500&auto=format&fit=crop", desc: "Quirky handmade museum of drivable cars shaped like shoes, cameras, and toilets." },
+        { name: "Taramati Baradari", entry: 0, img: "https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?w=500&auto=format&fit=crop", desc: "Historic acoustic music pavilion built atop a hill near Golconda for royal singers." },
+        { name: "KBR National Park (Jubilee Hills)", entry: 20, img: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=500&auto=format&fit=crop", desc: "Protected urban forest trail offering peaceful nature walks among peacocks." },
+        { name: "Purani Haveli & Nizam Museum", entry: 80, img: "https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?w=500&auto=format&fit=crop", desc: "Examine the world's longest wooden wardrobe and gold gifts of the 7th Nizam." },
+        { name: "Jagannath Temple Banjara Hills", entry: 0, img: "https://images.unsplash.com/photo-1616423640778-28d1b53229bd?w=500&auto=format&fit=crop", desc: "Modern red sandstone replica of the iconic Puri Jagannath shrine." },
+        { name: "Durgam Cheruvu Secret Lake & Bridge", entry: 0, img: "https://images.unsplash.com/photo-1595658658421-a9ac457190ca?w=500&auto=format&fit=crop", desc: "Illuminated cable-stayed bridge over a secluded lake surrounded by granite boulders." },
+        { name: "Mecca Masjid", entry: 0, img: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=500&auto=format&fit=crop", desc: "One of India's largest heritage mosques built using soil brought directly from Mecca." },
+        { name: "Osman Sagar (Gandipet Lake)", entry: 0, img: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=500&auto=format&fit=crop", desc: "Serene reservoir lake park offering sunset views on the city outskirts." },
+        { name: "State Archaeology Museum", entry: 10, img: "https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?w=500&auto=format&fit=crop", desc: "Located in Public Gardens, housing ancient Kakatiya bronzes and an Egyptian mummy." }
+      ],
+      "Ahmedabad": [
+        { name: "Sabarmati Ashram", entry: 0, img: "https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?w=500&auto=format&fit=crop", desc: "Mahatma Gandhi's peaceful headquarters along the Sabarmati riverbanks." },
+        { name: "Adalaj Stepwell (Vav)", entry: 0, img: "https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?w=500&auto=format&fit=crop", desc: "5-story 1498 Solanki-style carved sandstone subterranean stepwell." },
+        { name: "Sabarmati Riverfront Promenade", entry: 0, img: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500&auto=format&fit=crop", desc: "Walk along urban riverfront parks, cycling tracks, and Atal Pedestrian Bridge." },
+        { name: "Kankaria Lake & Zoo", entry: 25, img: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=500&auto=format&fit=crop", desc: "15th-century circular lake with tethered balloon rides, mini trains, and zoo." },
+        { name: "Siddi Saiyyed Mosque", entry: 0, img: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=500&auto=format&fit=crop", desc: "World-famous intricately carved yellow stone 'Tree of Life' lattice windows." },
+        { name: "Calico Museum of Textiles", entry: 0, img: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=500&auto=format&fit=crop", desc: "Premier textile museum displaying court fabrics, court costumes, and ikats." },
+        { name: "Akshardham Temple Gandhinagar", entry: 0, img: "https://images.unsplash.com/photo-1616423640778-28d1b53229bd?w=500&auto=format&fit=crop", desc: "23-acre sandstone temple complex featuring light water shows and gardens." },
+        { name: "Auto World Vintage Car Museum", entry: 100, img: "https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=500&auto=format&fit=crop", desc: "Collection of over 100 vintage Rolls-Royces, Bentleys, Maybachs, and Cadillacs." },
+        { name: "Hutheesing Jain Temple", entry: 0, img: "https://images.unsplash.com/photo-1600011689032-8b628b8a8747?w=500&auto=format&fit=crop", desc: "1848 white marble temple with 52 shrines dedicated to Lord Dharmanatha." },
+        { name: "Manek Chowk Night Food Market", entry: 0, img: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500&auto=format&fit=crop", desc: "Jewelry market by day transforming into a bustling midnight street food bazaar." },
+        { name: "Science City Ahmedabad", entry: 50, img: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=500&auto=format&fit=crop", desc: "Robotics gallery, aquatic kingdom aquarium, and IMAX 3D space theaters." },
+        { name: "Law Garden Night Market", entry: 0, img: "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=500&auto=format&fit=crop", desc: "Street markets brimming with Gujarati traditional Chaniya Cholis and mirror work." },
+        { name: "Bhadra Fort & Teen Darwaza", entry: 10, img: "https://images.unsplash.com/photo-1597040639427-419165365a49?w=500&auto=format&fit=crop", desc: "Royal 1411 fort complex and triple arched stone entry gate to the walled city." },
+        { name: "Dada Harir Stepwell", entry: 0, img: "https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?w=500&auto=format&fit=crop", desc: "Intricately carved 1499 stepwell built in Asarwa with Arabic inscriptions." },
+        { name: "Sarkhej Roza Heritage Complex", entry: 0, img: "https://images.unsplash.com/photo-1592639296346-560c37a0f711?w=500&auto=format&fit=crop", desc: "Elegant Sufi tomb complex surrounding a central water tank, called the Acropolis of Ahmedabad." },
+        { name: "Shaking Minarets (Jhulta Minar)", entry: 0, img: "https://images.unsplash.com/photo-1548013146-72479768bada?w=500&auto=format&fit=crop", desc: "Mysterious 15th-century minarets where vibrating one sways the other." },
+        { name: "Lalbhai Dalpatbhai Museum", entry: 0, img: "https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?w=500&auto=format&fit=crop", desc: "Collection of ancient Indian sculptures, wood carvings, and miniature manuscript paintings." },
+        { name: "Vichaar Utensil Museum", entry: 50, img: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=500&auto=format&fit=crop", desc: "Unique museum housing thousands of historic brass, copper, and bronze kitchenware." },
+        { name: "Thol Bird Sanctuary Lake", entry: 50, img: "https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=500&auto=format&fit=crop", desc: "Freshwater lake sanctuary housing sarus cranes, pelicans, and waterbirds." },
+        { name: "Gujarat High Court Gallery Walk", entry: 0, img: "https://images.unsplash.com/photo-1588416936097-41850ab3d86d?w=500&auto=format&fit=crop", desc: "Modern architectural precinct designed by legendary architect Le Corbusier." },
+        { name: "Nirma Vidya Vihar Park", entry: 0, img: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=500&auto=format&fit=crop", desc: "Quiet manicured university campus gardens and architectural pavilions." },
+        { name: "Sanskar Kendra Museum", entry: 10, img: "https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?w=500&auto=format&fit=crop", desc: "Le Corbusier-designed city museum detailing Ahmedabad's history, art, and kites." }
+      ],
+      "Pune": [
+        { name: "Shaniwar Wada Fort", entry: 25, img: "https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?w=500&auto=format&fit=crop", desc: "Historic seat of the Maratha Peshwas built in 1732 featuring massive teak gates." },
+        { name: "Aga Khan Palace", entry: 25, img: "https://images.unsplash.com/photo-1600011689032-8b628b8a8747?w=500&auto=format&fit=crop", desc: "Italian arches and spacious lawns; served as Gandhi's sanctuary during Salt March era." },
+        { name: "Sinhagad Fort Trek", entry: 50, img: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=500&auto=format&fit=crop", desc: "Hilltop Maratha fortress offering breathtaking views and hot pitla bhakri." },
+        { name: "Dagdusheth Halwai Ganpati Temple", entry: 0, img: "https://images.unsplash.com/photo-1616423640778-28d1b53229bd?w=500&auto=format&fit=crop", desc: "Famous golden shrine dedicated to Lord Ganesha in the heart of the city." },
+        { name: "Osho Teerth Park & Ashram", entry: 0, img: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=500&auto=format&fit=crop", desc: "Zen-inspired Japanese garden with bamboo groves and running streams in Koregaon Park." },
+        { name: "Raja Dinkar Kelkar Museum", entry: 100, img: "https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?w=500&auto=format&fit=crop", desc: "20,000 everyday Indian artifacts, musical instruments, and Mastani Mahal exhibits." },
+        { name: "Pataleshwar Cave Temple", entry: 0, img: "https://images.unsplash.com/photo-1548013146-72479768bada?w=500&auto=format&fit=crop", desc: "8th-century monolithic rock-cut cave temple sculpted directly out of basalt." },
+        { name: "Parvati Hill Temple Sunset", entry: 0, img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&auto=format&fit=crop", desc: "Climb 103 stone steps for panoramic 360-degree sunset views over Pune." },
+        { name: "Pune University Campus (SPPU)", entry: 0, img: "https://images.unsplash.com/photo-1588416936097-41850ab3d86d?w=500&auto=format&fit=crop", desc: "411 acres of colonial heritage stone buildings, banyan tree trails, and lawns." },
+        { name: "Fergusson College Road Cafes", entry: 0, img: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500&auto=format&fit=crop", desc: "Student hangout hub packed with iconic bakeries, cafes, and bookstalls." },
+        { name: "Khadakwasla Dam Backwaters", entry: 0, img: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=500&auto=format&fit=crop", desc: "Scenic lakeside picnic destination serving roasted corn and hot bhajiyas." },
+        { name: "Pu La Deshpande Japanese Garden", entry: 20, img: "https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=500&auto=format&fit=crop", desc: "Modeled after Okayama Korakuen Garden, featuring wooden bridges and fish ponds." },
+        { name: "Lohagad Fort & Bhaja Caves", entry: 50, img: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=500&auto=format&fit=crop", desc: "Iron fortress perched 3,400 feet up near ancient 2nd-century BC Buddhist rock caves." },
+        { name: "National War Museum Pune", entry: 0, img: "https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?w=500&auto=format&fit=crop", desc: "Patriotic memorial displaying MiG-23 fighter jets, tanks, and naval armaments." },
+        { name: "Vetal Tekdi Hilltop Walk", entry: 0, img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&auto=format&fit=crop", desc: "Highest elevation point in Pune city limits, perfect for sunrise hikes." },
+        { name: "Mulshi Dam Lake", entry: 0, img: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500&auto=format&fit=crop", desc: "Picturesque Western Ghats dam surrounded by misty green hills and waterfalls." },
+        { name: "Tribal Cultural Museum", entry: 10, img: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=500&auto=format&fit=crop", desc: "Showcases masks, jewelry, and instruments from Maharashtra's indigenous tribes." },
+        { name: "Chaturshringi Temple", entry: 0, img: "https://images.unsplash.com/photo-1616423640778-28d1b53229bd?w=500&auto=format&fit=crop", desc: "Hillside temple dedicated to Goddess Chaturshringi nestled on Senapati Bapat road." },
+        { name: "Lal Mahal", entry: 10, img: "https://images.unsplash.com/photo-1597040639427-419165365a49?w=500&auto=format&fit=crop", desc: "Reconstructed red palace where Chhatrapati Shivaji Maharaj spent his childhood." },
+        { name: "Empress Botanical Garden", entry: 20, img: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=500&auto=format&fit=crop", desc: "39-acre historic British-era garden featuring rare tropical plant species." },
+        { name: "Mahatma Phule Wada Market", entry: 0, img: "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=500&auto=format&fit=crop", desc: "Victorian Gothic circular fruit and flower market built in 1885." },
+        { name: "Katraj Snake Park & Zoo", entry: 40, img: "https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=500&auto=format&fit=crop", desc: "Reptile park and wildlife conservation center situated around Katraj Lake." }
       ]
     };
 
-    function generateItinerary(event) {
-      event.preventDefault();
-      const destination = document.getElementById('destination').value;
-      const days = parseInt(document.getElementById('days').value);
+    document.addEventListener('DOMContentLoaded', () => {
+      const activeUser = localStorage.getItem('active_user');
 
-      const section = document.getElementById('itinerary-section');
-      const title = document.getElementById('itineraryTitle');
-      const badge = document.getElementById('badgeStyle');
-      const content = document.getElementById('itineraryContent');
-
-      title.innerText = `${days}-Day Itinerary for ${destination}`;
-      badge.innerText = "Custom Plan";
-
-      let plans = sampleItineraries[destination] || [
-        "Day 1: City orientation tour and local landmark exploration.",
-        "Day 2: Deep dive into local food, hidden alleyways, and cultural hubs.",
-        "Day 3: Scenic viewpoints, souvenir shopping, and departure."
-      ];
-
-      let htmlOutput = '';
-      for (let i = 0; i < Math.min(days, plans.length); i++) {
-        htmlOutput += `
-          <div class="bg-white p-4 rounded-xl shadow-sm border border-cyan-100 flex items-start gap-3">
-            <div class="bg-cyan-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0">
-              ${i + 1}
-            </div>
-            <div>
-              <p class="text-slate-800 font-medium">${plans[i]}</p>
-            </div>
-          </div>
-        `;
+      if (!activeUser) {
+        alert('No active session found. Redirecting to user setup...');
+        window.location.href = '/';
+        return;
       }
 
-      content.innerHTML = htmlOutput;
-      section.classList.remove('hidden');
-      section.scrollIntoView({ behavior: 'smooth' });
-    }
+      const userExpensesKey = `expenses_${activeUser}`;
+      const userProfileKey = `user_${activeUser}`;
 
-    function selectDestination(destName) {
-      document.getElementById('destination').value = destName;
-      document.getElementById('planner').scrollIntoView({ behavior: 'smooth' });
-    }
+      const rawProfile = localStorage.getItem(userProfileKey);
+      const userProfile = rawProfile ? JSON.parse(rawProfile) : null;
+      
+      let expenses = JSON.parse(localStorage.getItem(userExpensesKey)) || [];
+      let budget = userProfile ? (parseFloat(userProfile.budget) || 0) : 0;
 
-    if (savedDestination) {
-      const destSelect = document.getElementById('destination');
-      if (destSelect) {
-        const optionExists = Array.from(destSelect.options).some(opt => opt.value === savedDestination);
-        if (optionExists) {
-          destSelect.value = savedDestination;
+      const userDisplayName = document.getElementById('userDisplayName');
+      const expenseForm = document.getElementById('expenseForm');
+      const descInput = document.getElementById('descInput');
+      const amountInput = document.getElementById('amountInput');
+      const categoryInput = document.getElementById('categoryInput');
+      const dateInput = document.getElementById('dateInput');
+      const resetDataBtn = document.getElementById('resetDataBtn');
+      const switchUserBtn = document.getElementById('switchUserBtn');
+      const filterCategory = document.getElementById('filterCategory');
+      const expenseList = document.getElementById('expenseList');
+      const emptyState = document.getElementById('emptyState');
+
+      const totalSpentDisplay = document.getElementById('totalSpentDisplay');
+      const totalBudgetDisplay = document.getElementById('totalBudgetDisplay');
+      const remainingDisplay = document.getElementById('remainingDisplay');
+      const progressBar = document.getElementById('progressBar');
+      const progressPercent = document.getElementById('progressPercent');
+
+      // Modal Elements
+      const budgetAlertModal = document.getElementById('budgetAlertModal');
+      const budgetAlertMessage = document.getElementById('budgetAlertMessage');
+      const closeAlertBtn = document.getElementById('closeAlertBtn');
+
+      if (userDisplayName) userDisplayName.textContent = activeUser;
+      if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+
+      // Close modal listener
+      closeAlertBtn.addEventListener('click', () => {
+        budgetAlertModal.classList.add('hidden');
+      });
+
+      // Render Famous Attractions from User Entered City
+      function renderAttractions() {
+        const attractionsGrid = document.getElementById('attractionsGrid');
+        const attractionsSubtitle = document.getElementById('attractionsSubtitle');
+        
+        const city = (userProfile && userProfile.destination) ? userProfile.destination : 'Delhi';
+        const attractions = CITY_DATABASE[city] || CITY_DATABASE["Delhi"];
+
+        if (attractionsSubtitle) {
+          attractionsSubtitle.textContent = `Famous attractions and top landmarks in ${city}`;
+        }
+
+        if (attractionsGrid) {
+          attractionsGrid.innerHTML = '';
+          
+          // Display up to 8 top attractions from the city
+          const itemsToDisplay = attractions.slice(0, 8);
+          
+          itemsToDisplay.forEach(item => {
+            const entryText = item.entry === 0 ? "Free" : `\u20B9${item.entry}`;
+            const card = document.createElement('div');
+            card.className = 'group flex flex-col justify-between overflow-hidden rounded-xl border border-slate-100 bg-slate-50 shadow-sm hover:shadow-md transition';
+            card.innerHTML = `
+              <div class="h-24 w-full overflow-hidden">
+                <img src="${item.img}" alt="${item.name}" onerror="this.src='https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&auto=format&fit=crop'" class="w-full h-full object-cover group-hover:scale-105 transition duration-300"/>
+              </div>
+              <div class="p-2.5 text-center flex-1 flex flex-col justify-between">
+                <p class="text-xs font-bold text-slate-800 leading-tight mb-1" title="${item.name}">${item.name}</p>
+                <span class="text-[10px] font-semibold text-brand-600 block">${entryText}</span>
+              </div>
+            `;
+            attractionsGrid.appendChild(card);
+          });
         }
       }
-    }
 
-    render();
+      // Dynamic Non-Repeating Multi-Day Generator
+      function renderItinerary() {
+        const itinerarySection = document.getElementById('itinerarySection');
+        const itineraryCardsGrid = document.getElementById('itineraryCardsGrid');
+        const itinerarySubtitle = document.getElementById('itinerarySubtitle');
+        const dailyBudgetBadge = document.getElementById('dailyBudgetBadge');
+
+        if (!userProfile || !userProfile.wantItinerary) {
+          itinerarySection.classList.add('hidden');
+          return;
+        }
+
+        itinerarySection.classList.remove('hidden');
+
+        const city = userProfile.destination || 'Delhi';
+        const totalDays = parseInt(userProfile.days) || 3;
+        const totalBudget = parseFloat(userProfile.budget) || 0;
+        const dailyAllowance = totalDays > 0 ? totalBudget / totalDays : 0;
+        const startDateStr = userProfile.startDate || new Date().toISOString().split('T')[0];
+        const startDateObj = new Date(startDateStr);
+
+        itinerarySubtitle.textContent = `${totalDays}-Day Visual Itinerary for ${city} (Starting ${startDateStr})`;
+        dailyBudgetBadge.textContent = `Target: \u20B9${dailyAllowance.toLocaleString('en-IN', { maximumFractionDigits: 0 })} / day`;
+
+        const cityAttractionPool = CITY_DATABASE[city] || CITY_DATABASE["Delhi"];
+        const totalAvailablePlaces = cityAttractionPool.length;
+
+        itineraryCardsGrid.innerHTML = '';
+
+        for (let i = 0; i < totalDays; i++) {
+          const currentDayDate = new Date(startDateObj);
+          currentDayDate.setDate(startDateObj.getDate() + i);
+          const dateFormatted = currentDayDate.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', weekday: 'short' });
+
+          const morningIndex = (i * 3) % totalAvailablePlaces;
+          const afternoonIndex = (i * 3 + 1) % totalAvailablePlaces;
+          const eveningIndex = (i * 3 + 2) % totalAvailablePlaces;
+
+          const daySlots = [
+            { ...cityAttractionPool[morningIndex], time: "Morning" },
+            { ...cityAttractionPool[afternoonIndex], time: "Afternoon" },
+            { ...cityAttractionPool[eveningIndex], time: "Evening" }
+          ];
+
+          const dayCard = document.createElement('div');
+          dayCard.className = 'bg-slate-50 border border-slate-200/90 rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition duration-200';
+          
+          let activitiesHTML = daySlots.map((act) => {
+            const entryText = act.entry === 0 ? "Free Entry" : `Entry: \u20B9${act.entry}`;
+            const badgeClass = act.entry === 0 
+              ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
+              : "bg-blue-50 text-blue-700 border-blue-200";
+
+            return `
+              <div class="bg-white p-3.5 rounded-xl border border-slate-100 flex gap-3.5 items-start">
+                <img 
+                  src="${act.img}" 
+                  alt="${act.name}" 
+                  onerror="this.src='https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=500&auto=format&fit=crop'" 
+                  class="w-18 h-18 rounded-lg object-cover shrink-0 bg-slate-100" 
+                  style="width: 4.5rem; height: 4.5rem;"
+                />
+                <div class="space-y-1 min-w-0 flex-1">
+                  <div class="flex items-center justify-between gap-1 mb-1">
+                    <span class="text-[10px] font-bold text-brand-600 uppercase tracking-wider">${act.time}</span>
+                    <span class="text-[10px] font-semibold border px-1.5 py-0.5 rounded-full ${badgeClass}">${entryText}</span>
+                  </div>
+                  <h5 class="text-xs font-bold text-slate-800 leading-snug">${act.name}</h5>
+                  <p class="text-[11px] text-slate-500 leading-normal">${act.desc}</p>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          dayCard.innerHTML = `
+            <div class="p-4 space-y-4">
+              <div class="flex justify-between items-center pb-2 border-b border-slate-200">
+                <span class="font-bold text-brand-900 text-sm">Day ${i + 1}</span>
+                <span class="text-xs font-semibold text-slate-500 bg-white px-2.5 py-1 rounded-full border border-slate-200">${dateFormatted}</span>
+              </div>
+              <div class="space-y-3">
+                ${activitiesHTML}
+              </div>
+            </div>
+            <div class="px-4 py-3 bg-slate-100/70 border-t border-slate-200/60 flex justify-between items-center text-xs text-slate-600 font-medium">
+              <span>Estimated Daily Cap</span>
+              <span class="font-bold text-emerald-700">\u20B9${dailyAllowance.toFixed(0)}</span>
+            </div>
+          `;
+
+          itineraryCardsGrid.appendChild(dayCard);
+        }
+      }
+
+      const getCategoryBadge = (category) => {
+        const badges = {
+          Transport: 'bg-blue-50 text-blue-700 border-blue-200',
+          Food: 'bg-amber-50 text-amber-700 border-amber-200',
+          Stay: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+          Activities: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+          Shopping: 'bg-purple-50 text-purple-700 border-purple-200',
+          Misc: 'bg-slate-50 text-slate-700 border-slate-200'
+        };
+        return badges[category] || badges.Misc;
+      };
+
+      function render() {
+        const selectedCategory = filterCategory.value;
+        const filteredExpenses = selectedCategory === 'All' 
+          ? expenses 
+          : expenses.filter(e => e.category === selectedCategory);
+
+        expenseList.innerHTML = '';
+        if (filteredExpenses.length === 0) {
+          emptyState.classList.remove('hidden');
+        } else {
+          emptyState.classList.add('hidden');
+          filteredExpenses.forEach((exp) => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-slate-50 transition';
+            row.innerHTML = `
+              <td class="py-3 px-3 text-slate-500 text-xs">${exp.date}</td>
+              <td class="py-3 px-3">
+                <span class="inline-block px-2.5 py-1 rounded-full text-xs font-semibold border ${getCategoryBadge(exp.category)}">
+                  ${exp.category}
+                </span>
+              </td>
+              <td class="py-3 px-3 font-medium text-slate-800">${exp.desc}</td>
+              <td class="py-3 px-3 text-right font-bold text-slate-800">&#8377;${exp.amount.toFixed(2)}</td>
+              <td class="py-3 px-3 text-center">
+                <button onclick="deleteExpense('${exp.id}')" class="text-slate-400 hover:text-red-500 transition p-1 rounded-lg">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </td>
+            `;
+            expenseList.appendChild(row);
+          });
+        }
+
+        const totalSpent = expenses.reduce((acc, curr) => acc + (curr.amount || 0), 0);
+        const remaining = budget - totalSpent;
+        const rawPercentage = budget > 0 ? (totalSpent / budget) * 100 : 0;
+        const displayPercentage = Math.min(rawPercentage, 100);
+
+        totalSpentDisplay.textContent = `\u20B9${totalSpent.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+        totalBudgetDisplay.textContent = `\u20B9${budget.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+        remainingDisplay.textContent = `\u20B9${remaining.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+        
+        remainingDisplay.className = remaining < 0 
+          ? "text-2xl font-black text-red-600 mt-2" 
+          : "text-2xl font-black text-emerald-600 mt-2";
+
+        progressBar.style.width = `${displayPercentage}%`;
+        progressPercent.textContent = `${rawPercentage.toFixed(0)}%`;
+        
+        if (rawPercentage >= 100) {
+          progressBar.className = "bg-red-500 h-3 rounded-full transition-all duration-300";
+        } else if (rawPercentage >= 80) {
+          progressBar.className = "bg-amber-500 h-3 rounded-full transition-all duration-300";
+        } else {
+          progressBar.className = "bg-brand-600 h-3 rounded-full transition-all duration-300";
+        }
+
+        if (window.lucide) {
+          lucide.createIcons();
+        }
+      }
+
+      function saveState() {
+        localStorage.setItem(userExpensesKey, JSON.stringify(expenses));
+        render();
+      }
+
+      expenseForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const parsedAmount = parseFloat(amountInput.value);
+        if (isNaN(parsedAmount) || parsedAmount <= 0) return;
+
+        // Calculate pre-add and post-add budget percentages
+        const currentSpent = expenses.reduce((acc, curr) => acc + (curr.amount || 0), 0);
+        const currentPct = budget > 0 ? (currentSpent / budget) * 100 : 0;
+        const newSpent = currentSpent + parsedAmount;
+        const newPct = budget > 0 ? (newSpent / budget) * 100 : 0;
+
+        const newExpense = {
+          id: Date.now().toString(),
+          desc: descInput.value.trim(),
+          amount: parsedAmount,
+          category: categoryInput.value,
+          date: dateInput.value
+        };
+
+        expenses.unshift(newExpense);
+        saveState();
+
+        // Trigger Modal popup ONLY when crossing the 75% budget mark via adding an expense
+        if (budget > 0 && currentPct < 75 && newPct >= 75) {
+          budgetAlertMessage.textContent = `Warning! Adding this expense brought your budget utilization to ${newPct.toFixed(1)}%, exceeding the 75% limit.`;
+          budgetAlertModal.classList.remove('hidden');
+        }
+
+        descInput.value = '';
+        amountInput.value = '';
+        descInput.focus();
+      });
+
+      window.deleteExpense = function(id) {
+        expenses = expenses.filter(exp => exp.id !== id);
+        saveState();
+      };
+
+      filterCategory.addEventListener('change', render);
+
+      resetDataBtn.addEventListener('click', () => {
+        if (confirm(`Are you sure you want to clear all data for user "${activeUser}"?`)) {
+          expenses = [];
+          localStorage.removeItem(userExpensesKey);
+          render();
+        }
+      });
+
+      switchUserBtn.addEventListener('click', () => {
+        localStorage.removeItem('active_user');
+        window.location.href = '/';
+      });
+
+      renderAttractions();
+      renderItinerary();
+      render();
+    });
   </script>
 </body>
 </html>
